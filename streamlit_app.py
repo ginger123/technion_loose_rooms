@@ -80,6 +80,7 @@ def run():
         height=25 * 36,
         on_select="rerun",
         selection_mode="single-row",
+        use_container_width=True
         
     )
     # st.write(dir(selected_building))
@@ -88,7 +89,7 @@ def run():
         building = un_occupied_df.iloc[row]['building']
         st.write(building)
         mask = (df['start_time'].dt.date == select_date) & (df['building'] == building)
-        st.dataframe(df.loc[mask])
+        st.dataframe(df.loc[mask], use_container_width=True)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import pytz
 import pandas as pd
 from datetime import datetime, timedelta
 import numpy as np
@@ -44,17 +45,23 @@ def run():
     st.header("Technion Room finder")
     st.write("Please select a time and date")
     # Input data
-    select_date = st.date_input("Enter day", value=datetime.now())
-    start_time = st.time_input("Enter start time", datetime.now())
-    end_time = st.time_input("Enter end time", datetime.now() + timedelta(minutes=30))
-    if end_time < start_time:
+    jerusalem_tz = pytz.timezone('Asia/Jerusalem')
+    now_in_israel = pytz.utc.localize(datetime.utcnow()).astimezone(jerusalem_tz)
+    if 'start_time' not in st.session_state:
+        st.session_state.start_time = now_in_israel
+        st.session_state.end_time = now_in_israel + timedelta(minutes=30)
+    select_date = st.date_input("Enter day", value=now_in_israel)
+    st.session_state.start_time = st.time_input("Enter start time", st.session_state.start_time)
+    st.session_state.end_time = st.time_input("Enter end time", st.session_state.end_time)
+
+    if st.session_state.end_time < st.session_state.start_time:
         st.error("end time < start time!")
         return
     text_search = st.text_input("filter buildings")
 
     # combine to datetime
-    start_datetime = datetime.combine(select_date, start_time)
-    end_datetime = datetime.combine(select_date, end_time)
+    start_datetime = datetime.combine(select_date, st.session_state.start_time)
+    end_datetime = datetime.combine(select_date, st.session_state.end_time)
 
     # get data and analyze
     df = get_dataframe()
@@ -73,6 +80,7 @@ def run():
         height=25 * 36,
         on_select="rerun",
         selection_mode="single-row",
+        use_container_width=True
         
     )
     # st.write(dir(selected_building))
@@ -81,7 +89,7 @@ def run():
         building = un_occupied_df.iloc[row]['building']
         st.write(building)
         mask = (df['start_time'].dt.date == select_date) & (df['building'] == building)
-        st.dataframe(df.loc[mask])
+        st.dataframe(df.loc[mask], use_container_width=True)
 
 
 if __name__ == "__main__":
